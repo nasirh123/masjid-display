@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html>
+<head>
+
+<meta charset="UTF-8">
+<title>Fundraiser</title>
+
+<script src="config.js"></script>
+
+<style>
+
+body{
+margin:0;
+font-family:Arial;
+background:#f4f4f4;
+overflow:hidden;
+}
+
+.container{
+display:flex;
+height:100vh;
+}
+
+/* LEFT MEDIA */
+
+.left{
+width:50%;
+background:black;
+position:relative;
+}
+
+.left img,
+.left video{
+position:absolute;
+width:100%;
+height:100%;
+object-fit:cover;
+}
+
+/* RIGHT PANEL */
+
+.right{
+width:50%;
+display:flex;
+flex-direction:column;
+align-items:center;
+justify-content:center;
+padding:40px;
+background:white;
+}
+
+.title{
+font-size:46px;
+font-weight:bold;
+text-align:center;
+}
+
+.lang{
+font-size:22px;
+margin:10px;
+}
+
+.amount{
+font-size:40px;
+margin:10px;
+}
+
+.progressWrap{
+width:80%;
+height:40px;
+background:#ddd;
+border-radius:20px;
+overflow:hidden;
+}
+
+.progress{
+height:100%;
+width:0%;
+background:#2e7d32;
+transition:width .5s;
+}
+
+/* BUTTONS */
+
+.buttons{
+margin-top:20px;
+display:flex;
+gap:10px;
+}
+
+button{
+font-size:18px;
+padding:8px 12px;
+border:none;
+border-radius:6px;
+background:#2e7d32;
+color:white;
+cursor:pointer;
+}
+
+input{
+font-size:18px;
+width:120px;
+padding:6px;
+text-align:center;
+}
+
+/* FIREWORKS */
+
+.firework{
+position:absolute;
+width:8px;
+height:8px;
+background:yellow;
+border-radius:50%;
+animation:boom 1s forwards;
+}
+
+@keyframes boom{
+to{transform:scale(6);opacity:0;}
+}
+
+.qr{
+margin-top:20px;
+}
+
+</style>
+
+</head>
+
+<body>
+
+<div class="container">
+
+<div class="left" id="media"></div>
+
+<div class="right">
+
+<div class="title" id="title"></div>
+
+<div class="lang" id="lang"></div>
+
+<div class="amount" id="amount">$0</div>
+
+<div class="progressWrap">
+<div class="progress" id="progress"></div>
+</div>
+
+<div class="buttons">
+<button onclick="donate(500)">+500</button>
+<button onclick="donate(1000)">+1000</button>
+</div>
+
+<div>
+<input id="custom" placeholder="$">
+<button onclick="customDonate()">Add</button>
+</div>
+
+<div class="qr">
+<img id="qr">
+</div>
+
+</div>
+
+</div>
+
+<script>
+
+/* LOAD SETTINGS */
+
+document.getElementById("title").innerText = CONFIG.title
+document.getElementById("lang").innerText = CONFIG.languages
+document.getElementById("qr").src =
+"https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=" + CONFIG.qrLink
+
+let total = parseInt(localStorage.getItem("fundTotal")) || 0
+let triggered = []
+
+update()
+
+function donate(v){
+total += v
+save()
+}
+
+function customDonate(){
+
+let v = parseInt(document.getElementById("custom").value)
+
+if(!v) return
+
+total += v
+
+save()
+
+document.getElementById("custom").value=""
+
+}
+
+function save(){
+localStorage.setItem("fundTotal", total)
+update()
+}
+
+function update(){
+
+document.getElementById("amount").innerText =
+"$" + total.toLocaleString()
+
+let percent = (total / CONFIG.goal) * 100
+
+document.getElementById("progress").style.width =
+percent + "%"
+
+checkMilestones(percent)
+
+}
+
+/* FIREWORKS */
+
+function checkMilestones(p){
+
+CONFIG.milestones.forEach(m=>{
+
+if(p>=m && !triggered.includes(m)){
+
+fireworks()
+
+triggered.push(m)
+
+}
+
+})
+
+}
+
+function fireworks(){
+
+for(let i=0;i<30;i++){
+
+let f=document.createElement("div")
+
+f.className="firework"
+
+f.style.left=Math.random()*window.innerWidth+"px"
+f.style.top=Math.random()*window.innerHeight+"px"
+
+document.body.appendChild(f)
+
+setTimeout(()=>f.remove(),1000)
+
+}
+
+}
+
+/* MEDIA ROTATION */
+
+const mediaFiles=[
+"media/234.jpeg",
+"media/Artboard-9-3.jpg",
+"media/ICFW-bldg-rendering.png",
+"media/ICFW-vertical.mp4",
+"media/Masjid-view.jpeg",
+"media/sunny-view-bldg.jpg",
+"media/Video-main1.mp4",
+"media/Video-main2.mp4",
+"media/Video-main3.mp4",
+"media/View-from-door.jpeg"
+]
+
+let index=0
+
+function showMedia(){
+
+let box=document.getElementById("media")
+
+box.innerHTML=""
+
+let file=mediaFiles[index]
+
+let el
+
+if(file.endsWith(".mp4")){
+
+el=document.createElement("video")
+el.src=file
+el.autoplay=true
+el.muted=true
+el.onended=next
+
+}else{
+
+el=document.createElement("img")
+el.src=file
+
+setTimeout(next, CONFIG.mediaInterval)
+
+}
+
+box.appendChild(el)
+
+}
+
+function next(){
+index=(index+1)%mediaFiles.length
+showMedia()
+}
+
+showMedia()
+
+</script>
+
+</body>
+</html>
